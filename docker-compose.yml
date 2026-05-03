@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: astrio_db
+      POSTGRES_USER: astrio_user
+      POSTGRES_PASSWORD: astrio_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      DATABASE_URL: postgresql://astrio_user:astrio_password@postgres:5432/astrio_db
+      JWT_SECRET: your_jwt_secret_key_change_in_production
+      NODE_ENV: development
+    depends_on:
+      - postgres
+    volumes:
+      - ./backend/src:/app/src
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_URL: http://localhost:5000/api
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
